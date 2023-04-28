@@ -23,7 +23,7 @@ ad_id,
 num_seconds_played_with_ads,
 num_seconds_played_no_ads
 from `nbcu-ds-prod-001.PeacockDataMartSilver.SILVER_VIDEO`
-where adobe_date between "2023-04-01" and "2023-04-26" and adobe_tracking_id is not null),
+where adobe_date between "2023-04-01" and "2023-04-10" and adobe_tracking_id is not null and lower(consumption_type_detail) = "vod"), --- only focus on VOD
 
 SU as (
 select 
@@ -31,7 +31,7 @@ adobe_tracking_id,
 report_date,
 entitlement
 from `nbcu-ds-prod-001.PeacockDataMartSilver.SILVER_USER`
-where report_date between "2023-04-01" and "2023-04-26" and entitlement = "Premium"
+where report_date between "2023-04-01" and "2023-04-10" and entitlement = "Premium"
 ),
 
 Combination as (select SV.*,
@@ -57,8 +57,8 @@ Content_Types,
 sum(num_views_started) as Content_Start,
 round(sum(ad_viewed),0) as Ad_Unit,
 round((sum(num_seconds_played_with_ads)- sum(num_seconds_played_no_ads))/60,0) as Ad_Minutes_Watched,
-round(sum(ad_viewed)/24,0) as Ad_Unit_per_Hour,
-round((sum(num_seconds_played_with_ads)- sum(num_seconds_played_no_ads))/(60*24),0) as Ad_Minutes_Watched_per_Hour,
+round(sum(ad_viewed)/ count(adobe_tracking_id)*24,0) as Ad_Unit_per_Hour, --  “the average number of ad units that a viewer watched in a hour”
+round((sum(num_seconds_played_with_ads)- sum(num_seconds_played_no_ads))/(count(adobe_tracking_id)*60*24),0) as Ad_Minutes_Watched_per_Hour, 
 round(sum(num_seconds_played_no_ads)/3600,2) as Hours_Watched,
 ifnull(round(safe_divide(CAST(sum(ad_viewed) AS DECIMAL), CAST(count(ad_id) AS DECIMAL)),3),0) as Ad_Pods_Watched_Prc
 from Combination 
