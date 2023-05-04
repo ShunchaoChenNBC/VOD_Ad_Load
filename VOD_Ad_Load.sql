@@ -5,9 +5,9 @@ adobe_tracking_id,
 adobe_date,
 extract(week from adobe_date) as Week,
 case 
-when device_platform like "%tv%" or device_platform = "Settop" then "TV"
-when device_platform in ("Mobile App","Ios") then "Mobile"
-else "Others" end as Devices, -- break down by TV / Mobile / Others
+when device_name in ("Ios Mobile", "Amazon Fire Tablet", "Android Mobile") then "Mobile"
+when device_name = "Wwe" then "Web"
+else "TV" end as Devices, -- break down by TV / Mobile / Web
 INITCAP(display_primary_genre) as Display_primary_genres,
 case when lower(regexp_extract(display_secondary_genre, r'[^;,&]+')) in ('comedy','drama','documentary') 
      then lower(regexp_extract(display_secondary_genre, r'[^;,&]+'))  
