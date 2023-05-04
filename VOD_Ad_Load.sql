@@ -1,4 +1,4 @@
-CREATE OR REPLACE TABLE `nbcu-ds-sandbox-a-001.Shunchao_Sandbox.VOD_AD_LOAD_ALPHA_V1` as
+CREATE OR REPLACE TABLE `nbcu-ds-sandbox-a-001.Shunchao_Sandbox.VOD_AD_LOAD_ALPHA_V2` as
 
 with SV as (select
 adobe_tracking_id,
@@ -6,7 +6,7 @@ adobe_date,
 extract(week from adobe_date) as Week,
 case 
 when device_name in ("Ios Mobile", "Amazon Fire Tablet", "Android Mobile") then "Mobile"
-when device_name = "Wwe" then "Web"
+when device_name = "Www" then "Web"
 else "TV" end as Devices, -- break down by TV / Mobile / Web
 INITCAP(display_primary_genre) as Display_primary_genres,
 case when lower(regexp_extract(display_secondary_genre, r'[^;,&]+')) in ('comedy','drama','documentary') 
@@ -15,6 +15,8 @@ case when lower(regexp_extract(display_secondary_genre, r'[^;,&]+')) in ('comedy
 case when lower(display_secondary_genre) like "%sport%" or lower(display_secondary_genre) like "%premier%league%" then "Sports" -- Incl. premier league to sport
      when lower(display_secondary_genre) like "%kids%" then "Kids"
      when lower(display_secondary_genre) like "%wwe%" then "WWE"
+     when lower(display_name) 
+     in (SELECT distinct lower(program) FROM `nbcu-ds-prod-001.PeacockDataMartMarketingGold.GOLD_ORIGINALS_PRIMARY_KPIS` where base_date between current_date("America/New_York")-5 and current_date("America/New_York")-1) then "Tv-original"
      Else 'Others' end as Secondary_Genre,
 num_views_started,
 display_secondary_genre,
@@ -36,11 +38,11 @@ where report_date between "2023-04-01" and "2023-04-10" and entitlement = "Premi
 
 Combination as (select SV.*,
 case 
-when (lower(Display_primary_genres) = "tv" and Secondary_Genre = "WWE") or (lower(Devices) = "tv" and Secondary_Genre = "WWE") then "Tv-WWE" -- Display_Primary_Genre are all Sports for WWE, so I set up 2nd clause using devices
-when (lower(Display_primary_genres) = "tv" and Secondary_Genre = "Sports") then "Tv-Sports"
-when (lower(Display_primary_genres) = "tv" and Secondary_Genre = "Kids") then "Tv-Kids"
+when (lower(Display_primary_genres) in ("tv","Sports","News") and Secondary_Genre = "WWE") or (lower(Devices) = "tv" and Secondary_Genre = "WWE") then "Tv-WWE" -- Display_Primary_Genre are all Sports for WWE, so I set up 2nd clause using devices
+when (lower(Display_primary_genres) in ("tv","Sports","News") and Secondary_Genre = "Sports") then "Tv-Sports"
+when (lower(Display_primary_genres) in ("tv","Sports","News") and Secondary_Genre = "Kids") then "Tv-Kids"
 when lower(Display_primary_genres) = "movies" and Secondary_Genre = "Kids" then "Movies-kids"
-when (lower(Display_primary_genres) = "tv" and Secondary_Genre not in ("WWE","Sports","Kids")) or (lower(Devices) = "tv" and Secondary_Genre not in ("WWE","Sports","Kids")) then "Tv-originals"
+when Secondary_Genre = "Tv-original" then "Tv-originals"
 when lower(Display_primary_genres) = "movies" or Secondary_Genre != "Kids" then "Movies"
 else "Others" end as Content_Types,
 SU.entitlement as Account_Entitlement
@@ -57,8 +59,7 @@ Content_Types,
 sum(num_views_started) as Content_Start,
 round(sum(ad_viewed),0) as Ad_Unit,
 round((sum(num_seconds_played_with_ads)- sum(num_seconds_played_no_ads))/60,0) as Ad_Minutes_Watched,
-round(sum(num_seconds_played_no_ads)/3600,2) as Hours_Watched,
-sum(ad_viewed) as Ad_Pods_Watched
+round(sum(num_seconds_played_no_ads)/3600,2) as Hours_Watched
 from Combination 
 group by 1,2,3,4,5,6)
 
