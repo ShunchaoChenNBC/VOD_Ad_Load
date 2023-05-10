@@ -1,4 +1,4 @@
-CREATE OR REPLACE TABLE `nbcu-ds-sandbox-a-001.Shunchao_Sandbox.VOD_AD_LOAD_ALPHA_V3` as
+CREATE OR REPLACE TABLE `nbcu-ds-sandbox-a-001.Shunchao_Sandbox.VOD_AD_LOAD_Beta` as
 
 with SV as (select
 adobe_tracking_id,
@@ -21,17 +21,19 @@ case when lower(display_secondary_genre) like "%sport%" or lower(display_seconda
 num_views_started,
 display_secondary_genre,
 ad_viewed,
-ad_id,
+ad_served,
+promo_length,
 case when promo_length < 15 then "<15S"
      when  promo_length < 30 then "15-30S" 
      when  promo_length < 60 then "30-60S"
-     else ">60S" end
+     when  promo_length >= 60 then ">60S"
+     else "" end -- Added logic to deal with null value
 AS silver_Ad_Duration, --post_evar141 Creatibe Duration
 promo_video_position AS Ad_Pod_Name, --post_evar143
 num_seconds_played_with_ads,
 num_seconds_played_no_ads
 from `nbcu-ds-prod-001.PeacockDataMartSilver.SILVER_VIDEO`
-where adobe_date between "2023-04-01" and "2023-04-10" and adobe_tracking_id is not null and lower(consumption_type_detail) = "vod"),
+where adobe_date between "2023-01-01" and "2023-05-08" and adobe_tracking_id is not null and lower(consumption_type_detail) = "vod"),
 
 SU as (
 select 
@@ -39,7 +41,7 @@ adobe_tracking_id,
 report_date,
 entitlement
 from `nbcu-ds-prod-001.PeacockDataMartSilver.SILVER_USER`
-where report_date between "2023-04-01" and "2023-04-10" and entitlement = "Premium"
+where report_date between "2023-01-01" and "2023-05-08" and entitlement = "Premium"
 ),
 
 Combination as (select SV.*,
@@ -51,7 +53,8 @@ when lower(Display_primary_genres) = "movies" and Secondary_Genre = "Kids" then 
 when Secondary_Genre = "Tv-original" then "Tv-originals"
 when lower(Display_primary_genres) = "movies" and Secondary_Genre != "Kids" then "Movies"
 else "Tv-Others" end as Content_Types,
-SU.entitlement as Account_Entitlement
+SU.entitlement as Account_Entitlement,
+case when ad_served = 1 then promo_length else 0 end as Ad_Time_Watched -- ad_served (Ad completed) then ad watched, so ad length is ad time
 from SV
 inner join SU on SV.adobe_date = SU.report_date and SV.adobe_tracking_id = SU.adobe_tracking_id), -- Only care about "Premium" tier
 
@@ -65,7 +68,7 @@ Content_Types,
 silver_Ad_Duration, --Duration brkdwn
 sum(num_views_started) as Content_Start,
 round(sum(ad_viewed),0) as Ad_Unit,
-round((sum(num_seconds_played_with_ads)- sum(num_seconds_played_no_ads))/60,0) as Ad_Minutes_Watched,
+round(sum(Ad_Time_Watched)/60,0) as Ad_Minutes_Watched,
 round(sum(num_seconds_played_no_ads)/3600,2) as Hours_Watched
 from Combination 
 group by 1,2,3,4,5,6,7
