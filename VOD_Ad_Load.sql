@@ -48,7 +48,7 @@ where report_date between "2023-04-01" and "2023-04-10" and entitlement = "Premi
 
 Combination as (select SV.*,
 case 
-when (lower(Display_primary_genres) in ("tv","Sports","News") and lower(franchise) = "wwe") then "Tv-WWE" -- Display_Primary_Genre are all Sports for WWE, so I set up 2nd clause using devices
+when lower(franchise) = "wwe" then "Tv-WWE"  -- keep all franchise wwe to make sure number is the same as that on PAVO dash
 when (lower(Display_primary_genres) in ("tv","Sports","News") and Secondary_Genre = "Sports") then "Tv-Sports"
 when (lower(Display_primary_genres) in ("tv","Sports","News") and Secondary_Genre = "Kids") then "Tv-Kids"
 when lower(Display_primary_genres) = "movies" and Secondary_Genre = "Kids" then "Movies-kids"
@@ -65,7 +65,7 @@ adobe_date,
 Account_Entitlement,
 extract(week from adobe_date) as Week,
 Devices,
-Primary_Genre,
+trim(Primary_Genre) as Primary_Genre, -- remove whitespace
 Content_Types,
 silver_Ad_Duration, --Duration brkdwn
 Ad_Pod_Name,
