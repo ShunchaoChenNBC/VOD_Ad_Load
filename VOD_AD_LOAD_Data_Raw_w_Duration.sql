@@ -38,7 +38,7 @@ num_seconds_played_with_ads,
 num_seconds_played_no_ads
 from `nbcu-ds-prod-001.PeacockDataMartSilver.SILVER_VIDEO` s
 left join (select Display_Name, Set_duration from  `nbcu-ds-sandbox-a-001.Shunchao_Sandbox.Top_TV_VOD_Premium_Accounts` where Display_Name is not null) a on lower(a.Display_Name) = lower(s.display_name)
-where adobe_date between "2023-01-01" and "2023-05-12" and adobe_tracking_id is not null and lower(consumption_type_detail) = "vod"),
+where adobe_date between "2023-02-01" and "2023-03-31" and adobe_tracking_id is not null and lower(consumption_type_detail) = "vod"),
 
 SU as (
 select 
@@ -46,10 +46,11 @@ adobe_tracking_id,
 report_date,
 entitlement
 from `nbcu-ds-prod-001.PeacockDataMartSilver.SILVER_USER`
-where report_date between "2023-01-01" and "2023-05-12" and entitlement = "Premium"
-)
+where report_date between "2023-02-01" and "2023-03-31" and entitlement = "Premium"
+group by 1,2,3 -- group by to reduce data size
+),
 
-select SV.*,
+Combination as (select SV.*,
 case 
 when lower(franchise) = "wwe" then "Tv-WWE"  -- keep all franchise wwe to make sure number is the same as that on PAVO dash
 when (lower(Display_primary_genres) in ("tv","Sports","News") and Secondary_Genre = "Sports") then "Tv-Sports"
@@ -61,4 +62,10 @@ else "Tv-Others" end as Content_Types,
 SU.entitlement as Account_Entitlement,
 num_seconds_played_with_ads - num_seconds_played_no_ads as Ad_Time_Watched -- with_ad minus without ad to get ad time watched
 from SV
-inner join SU on SV.adobe_date = SU.report_date and SV.adobe_tracking_id = SU.adobe_tracking_id -- Only care about "Premium" tier
+inner join SU on SV.adobe_date = SU.report_date and SV.adobe_tracking_id = SU.adobe_tracking_id) 
+
+select *
+from Combination
+union all
+select *
+from  `nbcu-ds-sandbox-a-001.Shunchao_Sandbox.VOD_AD_LOAD_Data_Raw_w_Duration`
