@@ -37,7 +37,7 @@ promo_video_position AS Ad_Pod_Name, --post_evar143
 num_seconds_played_with_ads,
 num_seconds_played_no_ads
 from `nbcu-ds-prod-001.PeacockDataMartSilver.SILVER_VIDEO` s
-left join (select Display_Name, Set_duration from `nbcu-ds-sandbox-a-001.Shunchao_Sandbox.Top VODs for Premium Accounts` where Display_Name is not null) a on lower(a.Display_Name) = lower(s.display_name)
+left join (select Display_Name, Set_duration from  `nbcu-ds-sandbox-a-001.Shunchao_Sandbox.Top_TV_VOD_Premium_Accounts` where Display_Name is not null) a on lower(a.Display_Name) = lower(s.display_name)
 where adobe_date between "2023-01-01" and "2023-05-12" and adobe_tracking_id is not null and lower(consumption_type_detail) = "vod"),
 
 SU as (
