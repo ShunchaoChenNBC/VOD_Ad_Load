@@ -1,4 +1,5 @@
-CREATE OR REPLACE TABLE `nbcu-ds-sandbox-a-001.Shunchao_Sandbox.VOD_AD_LOAD_Data_Raw_w_Duration` as
+
+create or replace table `nbcu-ds-sandbox-a-001.Shunchao_Sandbox.VOD_AD_LOAD_Table` as
 
 with SV as (select
 adobe_tracking_id,
@@ -38,7 +39,7 @@ num_seconds_played_with_ads,
 num_seconds_played_no_ads
 from `nbcu-ds-prod-001.PeacockDataMartSilver.SILVER_VIDEO` s
 left join (select Display_Name, Set_duration from  `nbcu-ds-sandbox-a-001.Shunchao_Sandbox.Top_TV_VOD_Premium_Accounts` where Display_Name is not null) a on lower(a.Display_Name) = lower(s.display_name)
-where adobe_date between "2023-02-01" and "2023-03-31" and adobe_tracking_id is not null and lower(consumption_type_detail) = "vod"),
+where adobe_date between "2023-05-13" and "2023-06-04" and adobe_tracking_id is not null and lower(consumption_type_detail) = "vod"),
 
 SU as (
 select 
@@ -46,7 +47,7 @@ adobe_tracking_id,
 report_date,
 entitlement
 from `nbcu-ds-prod-001.PeacockDataMartSilver.SILVER_USER`
-where report_date between "2023-02-01" and "2023-03-31" and entitlement = "Premium"
+where report_date between "2023-05-13" and "2023-06-04" and entitlement = "Premium"
 group by 1,2,3 -- group by to reduce data size
 ),
 
@@ -69,6 +70,7 @@ from Combination
 union all
 select *
 from  `nbcu-ds-sandbox-a-001.Shunchao_Sandbox.VOD_AD_LOAD_Data_Raw_w_Duration`
+
 
 --------------------------------------------------------------------------- Aggregation ----------------------------------------------------
 
