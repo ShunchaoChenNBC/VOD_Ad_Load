@@ -53,13 +53,13 @@ group by 1,2,3 -- group by to reduce data size
 
 Combination as (select SV.*,
 case 
-when lower(franchise) = "wwe" then "Tv-WWE"  -- keep all franchise wwe to make sure number is the same as that on PAVO dash
-when (lower(Display_primary_genres) in ("tv","Sports","News") and Secondary_Genre = "Sports") then "Tv-Sports"
-when (lower(Display_primary_genres) in ("tv","Sports","News") and Secondary_Genre = "Kids") then "Tv-Kids"
-when lower(Display_primary_genres) = "movies" and Secondary_Genre = "Kids" then "Movies-kids"
-when Secondary_Genre = "Tv-original" then "Tv-originals"
+when lower(franchise) = "wwe" then "TV-Wwe"  -- keep all franchise wwe to make sure number is the same as that on PAVO dash
+when (lower(Display_primary_genres) in ("tv","Sports","News") and Secondary_Genre = "Sports") then "TV-Sports"
+when (lower(Display_primary_genres) in ("tv","Sports","News") and Secondary_Genre = "Kids") then "TV-Kids"
+when lower(Display_primary_genres) = "movies" and Secondary_Genre = "Kids" then "Movies-Kids"
+when Secondary_Genre = "Tv-original" then "TV-Originals"
 when lower(Display_primary_genres) = "movies" and Secondary_Genre != "Kids" then "Movies"
-else "Tv-Others" end as Content_Types,
+else "TV-Others" end as Content_Types,
 SU.entitlement as Account_Entitlement,
 num_seconds_played_with_ads - num_seconds_played_no_ads as Ad_Time_Watched -- with_ad minus without ad to get ad time watched
 from SV
